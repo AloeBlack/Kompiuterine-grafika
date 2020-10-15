@@ -1,0 +1,70 @@
+<html>
+ <head>
+  <h1>Donatas Abromavièius - 1 lab.</h1>
+  <br>
+  <input type="button" value="Atgal" onclick="window.location.assign('lab1.html')">
+  <br>
+  <script type="application/javascript">
+
+    function draw() {
+		var canvas = document.getElementById('canvas');
+		if (canvas.getContext) {
+		var ctx = canvas.getContext("2d");
+		var x = 0;
+		var t = 0;
+
+		init();
+
+		function init(){
+			return setInterval(drawF, 10);
+		}
+
+    }
+        function drawF() {
+			t+=0.01;
+			ctx.clearRect(0,0,500,500);
+			ctx.beginPath();
+			ctx.moveTo(0,0);
+			ctx.lineTo(500,0);
+			ctx.lineTo(500,500);
+			ctx.lineTo(0,500);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.save();
+			ctx.transform(1, 0, 0, 1, 250*x, 0);
+			ctx.transform(1-(1.5*x), 0, 0, 1-(0.5*x), 0, 0);
+			ctx.fillStyle = "rgb(0,161,241)";
+			drawT();
+			if (t > 1 && t <= 2) {
+				x=t-0.99;
+			}
+			else if(t > 3){
+				x = 0;
+				t = 0;
+			}
+			ctx.restore();
+        }
+
+        function drawT() {
+        ctx.beginPath();
+		
+        ctx.moveTo(0,0);
+        ctx.lineTo(500,0);
+        ctx.lineTo(500,500);
+        ctx.lineTo(250,500);
+        ctx.lineTo(250,200);
+        ctx.lineTo(125,200);
+        ctx.lineTo(125,375);
+        ctx.lineTo(0,375);
+        ctx.lineTo(0,0);
+        ctx.fill();
+        }
+    }
+  </script>
+ </head>
+ <body onload="draw();">
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <h2>Uþduotis:</h2>
+  <img src="uzd67.png" align="left">
+ </body>
+</html>

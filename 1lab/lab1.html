@@ -1,0 +1,106 @@
+<html>
+ <head>
+  <h1>Donatas Abromavièius - 1 lab.</h1>
+  <input type="range" min="0" max="7" value="0" step="1" onchange="showValue(this.value)" />
+  <span id="range">0</span>
+  <br>
+  <input type="button" value="Mëyna" onclick="window.location.assign('Tm.html')">
+  <input type="button" value="Þalia" onclick="window.location.assign('Tz.html')">
+  <input type="button" value="Geltona" onclick="window.location.assign('Tg.html')">
+  <input type="button" value="Oranþinë" onclick="window.location.assign('To.html')">
+  <br>
+  <script type="text/javascript">
+	function showValue(newValue)
+	{
+		document.getElementById("range").innerHTML=newValue;
+		draw(newValue);
+	}
+  </script>
+  <script type="application/javascript">
+    function draw(step) {
+		var canvas = document.getElementById('canvas');
+		if (canvas.getContext) {
+			var ctx = canvas.getContext("2d");
+			canvas.width = canvas.width;
+
+			ctx.beginPath();
+			ctx.moveTo(0,0);
+			ctx.lineTo(500,0);
+			ctx.lineTo(500,500);
+			ctx.lineTo(0,500);
+			ctx.closePath();
+			ctx.stroke();
+			
+			var x = step - 1;
+			drawF(step);
+		}
+		
+        function drawF(step) {
+			if (step > 0) {
+				step = step - 1
+				ctx.save();
+				ctx.save();
+				ctx.save();
+				
+				if (step == x){
+					ctx.fillStyle = "rgb(0,161,241)";
+				}
+				ctx.transform(1, 0, 0, 1, 250, 0);
+				ctx.transform(-1, 0, 0, 1, 0, 0);
+				ctx.transform(0.5, 0, 0, 0.5, 0, 0);
+				drawF(step);
+				ctx.restore();
+				
+				if (step == x){
+					ctx.fillStyle = "rgb(124,187,0)";
+				}
+				ctx.transform(1, 0, 0, 1, 250, 0);
+				ctx.transform(-1, 0, 0, 1, 0, 0);
+				ctx.transform(0, 1, -1, 0, 0, 0);
+				ctx.transform(0.5, 0, 0, 0.5, 0, 0);
+				drawF(step);
+				ctx.restore();
+				
+				if (step == x){
+					ctx.fillStyle = "rgb(246,83,20)";
+				}
+				ctx.transform(1, 0, 0, 1, 250, 250);
+				ctx.transform(0.5, 0, 0, 0.5, 0, 0);
+				drawF(step);
+				ctx.restore();
+				
+				if (step == x){
+					ctx.fillStyle = "rgb(255,187,0)";
+				}
+				ctx.transform(1, 0, 0, 1, 125, 250);
+				ctx.transform(0, 1, -1, 0, 0, 0);
+				ctx.transform(0.25, 0, 0, 0.25, 0, 0);
+				drawF(step);
+			}
+			else drawFig();    
+        }       
+
+        function drawFig() {
+        ctx.beginPath();
+		
+        ctx.moveTo(0,0);
+        ctx.lineTo(500,0);
+        ctx.lineTo(500,500);
+        ctx.lineTo(250,500);
+        ctx.lineTo(250,200);
+        ctx.lineTo(125,200);
+        ctx.lineTo(125,375);
+        ctx.lineTo(0,375);
+        ctx.lineTo(0,0);
+        ctx.fill();
+        }
+    }
+	
+  </script>
+ </head>
+ <body onload="draw();">
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <h2>Uþduotis:</h2>
+  <img src="uzd67.png" align="left">
+ </body>
+</html>
