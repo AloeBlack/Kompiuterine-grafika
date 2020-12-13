@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Donatas Abromavièius - 3 lab.</title>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/three.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/jquery-1.9.0.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/stats.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/ConvexGeometry.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/TrackballControls.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/dat.gui.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<div id="Stats-output">
+</div>
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+    // once everything is loaded, we run our Three.js stuff.
+    $(function () {
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // create a render and set the size
+        var webGLRenderer = new THREE.WebGLRenderer();
+        webGLRenderer.setClearColorHex(0xEEEEEE, 1.0);
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+        webGLRenderer.shadowMapEnabled = true;
+
+        // position and point the camera to the center of the scene
+        camera.position.x = -60;
+        camera.position.y = 80;
+        camera.position.z = 100;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        // add the output of the renderer to the html element
+        $("#WebGL-output").append(webGLRenderer.domElement);
+		
+        // the points group
+        var spGroup;
+        // the mesh
+        var hullMesh;
+		
+		var R = 30;
+		var H = 60;
+
+        generatePoints(R,H);
+
+        // setup the control gui
+        var controls = new function () {
+            // we need the first child, since it's a multimaterial
+
+            this.redraw = function () {
+                scene.remove(spGroup);
+                scene.remove(hullMesh);
+                generatePoints(R,H);
+            };
+
+        }
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'redraw');
+
+		// add the output of the renderer to the html element
+		$("#WebGL-output").append(webGLRenderer.domElement);
+		var trackballControls = new THREE.TrackballControls( camera, webGLRenderer.domElement );     
+		render();
+
+        function generatePoints(R,H) {
+            var points = [];
+            for (var i = 0; i < 200; i++) {
+                var randomX = (Math.random() * 3 - 1.5) * R * Math.sin(Math.random()*2*Math.PI);
+                var randomY = (Math.random() * 3 - 1.5) * H;
+                var randomZ = (Math.random() * 3 - 1.5) * R * Math.cos(Math.random()*2*Math.PI);
+				
+				if(Math.pow(randomX,2) + Math.pow(randomZ,2) > Math.pow(R,2)){
+					points.push(new THREE.Vector3(randomX, randomY, randomZ));
+				}
+            }
+
+            spGroup = new THREE.Object3D();
+            var material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: false});
+            points.forEach(function (point) {
+
+                var spGeom = new THREE.SphereGeometry(0.2);
+                var spMesh = new THREE.Mesh(spGeom, material);
+                spMesh.position = point;
+                spGroup.add(spMesh);
+            });
+            // add the points as a group to the scene
+            scene.add(spGroup);
+
+            // use the same points to create a convexgeometry
+            var hullGeometry = new THREE.ConvexGeometry(points);
+			hullGeometry = newUV(hullGeometry);
+			var material;
+			createTexture(material);
+			newUV(hullGeometry);
+            hullMesh = new THREE.Mesh(hullGeometry, material);
+            scene.add(hullMesh);
+        }
+		
+		function createTexture(material) {
+			
+			var texture = new THREE.MeshPhongMaterial();
+			texture = new THREE.TextureLoader().load("chessboard.png");
+			texture.wrapS = THREE.RepeatWrapping;
+			texture.wrapT = THREE.RepeatWrapping;
+			
+			geom.computeVertexNormals();
+			material = new THREE.MeshPhongMaterial();
+			material.map = texture;
+			
+			return material;
+		}
+		
+		function newUV(geom){
+			for (var i = 0; i < geom.faces.length; i++){
+				var u;
+				var v;
+				
+				// a
+				var node = geom.vertices[geom.faces[i].a];
+				u = Math.atan2(node.x, node.z) / (2 * Math.PI);
+				v = node.y / H + 0.5;
+				if (u<0) { u++; }
+				var uvA = new THREE.Vector2(u,v);
+				
+				// b
+				node = geom.vertices[geom.faces[i].b];
+				u = Math.atan2(node.x, node.z) / (2 * Math.PI);
+				v = node.y / H + 0.5;
+				if (u<0) { u++; }
+				var uvB = new THREE.Vector2(u,v);
+				
+				// c
+				node = geom.vertices[geom.faces[i].c];
+				u = Math.atan2(node.x, node.z) / (2 * Math.PI);
+				v = node.y / H + 0.5;
+				if (u<0) { u++; }
+				var uvC = new THREE.Vector2(u,v);
+				
+				geom.faceVertexUvs[0].push([uvA, uvB, uvC]);
+			}
+			
+			return geom;
+		}
+
+        function render() {
+            stats.update();
+
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            webGLRenderer.render(scene, camera);
+			trackballControls.update();
+        }
+
+        function initStats() {
+
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            $("#Stats-output").append(stats.domElement);
+
+            return stats;
+        }
+    });
+
+
+</script>
+</body>
+</html>
