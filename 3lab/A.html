@@ -109,10 +109,9 @@
 
             // use the same points to create a convexgeometry
             var hullGeometry = new THREE.ConvexGeometry(points);
-			//hullGeometry = newUV(hullGeometry);
 			//var material;
 			//createTexture(material);
-			//newUV(hullGeometry);
+			//hullGeometry = newUV(hullGeometry);
             //hullMesh = new THREE.Mesh(hullGeometry, material);
 			hullMesh = createMesh(hullGeometry);
             scene.add(hullMesh);
