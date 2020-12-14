@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Donatas Abromavicius - 3 lab.</title>
+    <title>Donatas Abromavièius - 3 lab.</title>
     <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/three.js"></script>
     <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/jquery-1.9.0.js"></script>
     <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs//libs/stats.js"></script>
@@ -109,12 +109,27 @@
 
             // use the same points to create a convexgeometry
             var hullGeometry = new THREE.ConvexGeometry(points);
-			hullGeometry = newUV(hullGeometry);
-			var material;
-			createTexture(material);
-			newUV(hullGeometry);
-            hullMesh = new THREE.Mesh(hullGeometry, material);
+			//hullGeometry = newUV(hullGeometry);
+			//var material;
+			//createTexture(material);
+			//newUV(hullGeometry);
+            //hullMesh = new THREE.Mesh(hullGeometry, material);
+			hullMesh = createMesh(hullGeometry);
             scene.add(hullMesh);
+        }
+
+        function createMesh(geom) {
+
+            // assign two materials
+            var meshMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00, transparent: true, opacity: 0.2});
+            meshMaterial.side = THREE.DoubleSide;
+            var wireFrameMat = new THREE.MeshBasicMaterial();
+            wireFrameMat.wireframe = true;
+
+            // create a multimaterial
+            var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial, wireFrameMat]);
+
+            return mesh;
         }
 		
 		function createTexture(material) {
