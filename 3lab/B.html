@@ -1,0 +1,474 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Donatas Abromavicius - 3 lab.</title>
+	<script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs/libs/three.min.js"></script>
+    <script type="text/javascript" src="https://klevas.mif.vu.lt/~rimask/webgl/learning-threejs/libs/ConvexGeometry.js"></script>
+    <script src="libs/three.js"></script>
+    <script src="libs/dat.gui.js"></script>
+    <script src="libs/jquery-1.9.0.js"></script>
+    <script src="libs/stats.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<script>
+    $(function () {
+    var renderer;
+    var scene;
+    var C1;
+    var C2;
+    var C3;
+    var camObject;
+    var camObject2;
+    var control;
+	// create a scene, that will hold all our elements such as objects, cameras and lights.
+	scene = new THREE.Scene();
+	
+	C1 = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	C1.position.x = 40;
+	C1.position.y = 40;
+	C1.position.z = 40;
+	C1.lookAt(new THREE.Vector3(0, 8, 0));
+	
+	C2 = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	C2.position.x = 2;
+	C2.position.y = 3;
+	C2.position.z = 16;
+	C2.lookAt(new THREE.Vector3(2, 3, 4));
+	
+	C3 = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	C3.position.x = 0;
+	C3.position.y = 11.98;
+	C3.position.z = 0;
+	C3.lookAt(new THREE.Vector3(0, 8, 0));
+	C3.up.set(1,0,0);
+	
+	var startdir = new THREE.Vector3();
+	startdir.subVectors(C2.position , new THREE.Vector3(2, 3, 4));
+	var eyeTargetScale = Math.tan(C2.fov*(Math.PI/180)/2)*startdir.length();
+	
+	// create a render, sets the background color and the size
+	renderer = new THREE.WebGLRenderer();
+	renderer.setClearColor(0x404040, 1.0);
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.shadowMapEnabled = true;
+	var spotLight = new THREE.SpotLight();
+	spotLight.position.set(0, 20, 15);
+	spotLight.castShadow = true;
+	var ambientLight = new THREE.AmbientLight("#505050");
+	scene.add(spotLight);
+	scene.add(ambientLight);
+	
+	// add the output of the renderer to the html element
+	document.body.appendChild(renderer.domElement);
+	// box in camObject
+	var camerabox = new THREE.Object3D(); 
+	var camerabox2 = new THREE.Object3D();
+	var mesh;
+	var mesh1;
+	var mesh2;
+	var mesh3;
+	var geo = new THREE.BoxBufferGeometry( 25, 25, 10 );
+	var geo1 = new THREE.CylinderBufferGeometry(5,5,20,16);
+	var material = new THREE.MeshPhongMaterial({color : 0x9f9f9f});
+	mesh = new THREE.Mesh(geo,material);
+	mesh1 = new THREE.Mesh(geo1,material);
+	mesh2 = new THREE.Mesh(geo,material);
+	mesh3 = new THREE.Mesh(geo1,material);
+	mesh.rotation.y = Math.PI;
+	mesh.position.z = 20;
+	mesh1.rotation.x = Math.PI/2;
+	mesh1.position.z = 10;
+	mesh2.rotation.y = Math.PI;
+	mesh2.position.z = 20;
+	mesh3.rotation.x = Math.PI/2;
+	mesh3.position.z = 10;
+	camerabox.add(mesh);
+	camerabox.add(mesh1);
+	camerabox2.add(mesh2);
+	camerabox2.add(mesh3);
+	var axes = new THREE.AxisHelper( 60 );
+	var axes2 = new THREE.AxisHelper( 60 );
+	camerabox.add(axes);
+	camerabox.rotation.y = Math.PI;
+	camerabox2.add(axes2);
+	camerabox2.rotation.y = Math.PI;
+	camObject = new THREE.Object3D();
+	camObject.add(camerabox);
+	camObject.scale.set(0.05, 0.05, 0.05);
+	camObject.position.y = 12;
+	scene.add(camObject);
+	camObject2 = new THREE.Object3D();
+	camObject2.add(camerabox2);
+	camObject2.scale.set(0.05, 0.05, 0.05);
+	camObject2.position.x = 2;
+	camObject2.position.y = 3;
+	camObject2.position.z = 16;
+	camObject2.rotation.y = Math.PI;;
+	scene.add(camObject2);
+	
+	addFloor();
+	var judValdove = addValdove();
+	var stoviValdove = addValdove();
+	judValdove.name = 'valdove1';
+	stoviValdove.name = 'valdove2';
+	stoviValdove.position.x = 2;
+	stoviValdove.position.z = 4;
+	scene.add(judValdove);
+	scene.add(stoviValdove);
+	
+	var controls = new function() {
+		this.camera = C1;
+		this.showC1 = function () {
+			this.camera = C1;
+		};
+		this.showC2 = function () {
+			this.camera = C2;
+		};
+		this.showC3 = function () {
+			this.camera = C3;
+		};
+		this.C1fov = 45;
+		this.C2dollyzoom = 16;
+	}
+	
+	var gui = new dat.GUI();
+	gui.add(controls, 'C1fov', 0, 180);
+	gui.add(controls, 'showC1');
+	gui.add(controls, 'showC2');
+	gui.add(controls, 'showC3');
+	gui.add(controls, 'C2dollyzoom', 6, 30);
+	//generatePoints();
+	
+	render();
+	
+	function generatePoints() {
+            var points = [];
+			points.push(new THREE.Vector3(2 + window.innerWidth/2, 3 + window.innerHeight/2, 4));
+			points.push(new THREE.Vector3(2 + window.innerWidth/2, 3 - window.innerHeight/2, 4));
+			points.push(new THREE.Vector3(2 - window.innerWidth/2, 3 + window.innerHeight/2, 4));
+			points.push(new THREE.Vector3(2 - window.innerWidth/2, 3 - window.innerHeight/2, 4));
+			points.push(new THREE.Vector3(C2.position.x, C2.position.y, C2.position.z));
+
+            var hullGeometry = new THREE.ConvexGeometry(points);
+			var wireMesh = new THREE.EdgesGeometry(hullGeometry);
+            scene.add(wireMesh);
+        }
+    
+    function addValdove() {
+            var pointsX = [
+        250, 235, 235, 
+		240, 200, 200, 195, 220, 
+		218, 218, 217, 215, 214, 
+		214, 215, 217, 214, 212, 
+		210, 210, 212, 214, 220, 
+		220, 215, 208, 174, 173,
+		174, 169, 162, 160, 172, 
+		172, 173, 250 ];
+	    var pointsY = [
+		0, 10, 20, 
+		22, 30, 25, 28, 75, 
+		77, 80, 82, 84, 85, 
+		87, 88, 89, 91, 92, 
+		94, 97, 99, 100, 100, 
+		150, 190, 220, 300, 300,
+		310, 322, 334, 346, 358, 
+		370, 382, 382];
+		
+		var points = [];
+		var height = 5;
+		var count = 36;
+		for (var i = 0; i < count; i++) {
+			points.push(new THREE.Vector3(25-pointsX[i]/10, (pointsY[35]-pointsY[i]-174)/10, 0));
+		}
+		
+		var latheGeometry = new THREE.LatheGeometry(points, 20, 0, 2 * Math.PI);
+		var latheMaterial = new THREE.MeshPhongMaterial({color: 0x303030, side: THREE.BackSide});
+		var latheMesh = new THREE.Mesh(latheGeometry, latheMaterial);
+		latheMesh.castShadow = true;
+		latheMesh.scale.x = 0.1;
+		latheMesh.scale.y = 0.1;
+		latheMesh.scale.z = 0.1;
+		latheMesh.position.y = 1.75;
+
+		return latheMesh;
+    }
+    var step = 0;
+    function render() {
+		C1.fov = controls.C1fov;
+		C1.aspect = window.innerWidth / window.innerHeight;
+		C1.updateProjectionMatrix();
+        var valdove1 = scene.getObjectByName('valdove1');
+        C3.lookAt(valdove1.position);
+        renderer.render(scene, controls.camera);
+        camObject.lookAt(valdove1.position);
+        step += 0.02;
+        valdove1.position.x = 10 * Math.cos(step);
+		if(valdove1.position.x > 0){
+			camObject.rotation.z += Math.PI;
+		}
+		camObject2.position.z = controls.C2dollyzoom;
+		C2.position.z = controls.C2dollyzoom;
+		var eyedir = new THREE.Vector3();
+		eyedir.subVectors(C2.position, new THREE.Vector3(2, 3, 4));
+		C2.fov = (180/Math.PI)*2*Math.atan(eyeTargetScale/eyedir.length());
+		C2.updateProjectionMatrix();
+        requestAnimationFrame(render);
+    }
+	
+///////////////////////////////////////////////////////////////////////////////
+	
+	function addFloor() {
+        var floorGeometry = new THREE.PlaneGeometry(31.98, 31.98);
+		var floorGeometry1 = new THREE.PlaneGeometry(4, 4);
+        var floorMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
+        var floorMaterial1 = new THREE.MeshPhongMaterial({color: 0x0f0f0f});
+        var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+        var floorMesh1 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh2 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh3 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh4 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh5 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh6 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh7 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh8 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh9 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh10 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh11 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh12 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh13 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh14 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh15 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh16 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh17 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh18 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh19 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh20 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh21 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh22 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh23 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh24 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh25 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh26 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh27 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh28 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh29 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh30 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh31 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        var floorMesh32 = new THREE.Mesh(floorGeometry1, floorMaterial1);
+        floorMesh.receiveShadow = true;
+        floorMesh.rotation.x = -0.5 * Math.PI;
+		floorMesh.position.z = 2;
+		
+        floorMesh1.receiveShadow = true;
+        floorMesh1.rotation.x = -0.5 * Math.PI;
+		floorMesh1.position.x = 14;
+		floorMesh1.position.y = 0.01;
+		floorMesh1.position.z = 16;
+        floorMesh2.receiveShadow = true;
+        floorMesh2.rotation.x = -0.5 * Math.PI;
+		floorMesh2.position.x = 14;
+		floorMesh2.position.y = 0.01;
+		floorMesh2.position.z = 8;
+        floorMesh3.receiveShadow = true;
+        floorMesh3.rotation.x = -0.5 * Math.PI;
+		floorMesh3.position.x = 14;
+		floorMesh3.position.y = 0.01;
+		floorMesh3.position.z = 0;
+        floorMesh4.receiveShadow = true;
+        floorMesh4.rotation.x = -0.5 * Math.PI;
+		floorMesh4.position.x = 14;
+		floorMesh4.position.y = 0.01;
+		floorMesh4.position.z = -8;
+		
+        floorMesh5.receiveShadow = true;
+        floorMesh5.rotation.x = -0.5 * Math.PI;
+		floorMesh5.position.x = 10;
+		floorMesh5.position.y = 0.01;
+		floorMesh5.position.z = 12;
+        floorMesh6.receiveShadow = true;
+        floorMesh6.rotation.x = -0.5 * Math.PI;
+		floorMesh6.position.x = 10;
+		floorMesh6.position.y = 0.01;
+		floorMesh6.position.z = 4;
+        floorMesh7.receiveShadow = true;
+        floorMesh7.rotation.x = -0.5 * Math.PI;
+		floorMesh7.position.x = 10;
+		floorMesh7.position.y = 0.01;
+		floorMesh7.position.z = -4;
+        floorMesh8.receiveShadow = true;
+        floorMesh8.rotation.x = -0.5 * Math.PI;
+		floorMesh8.position.x = 10;
+		floorMesh8.position.y = 0.01;
+		floorMesh8.position.z = -12;
+		
+        floorMesh9.receiveShadow = true;
+        floorMesh9.rotation.x = -0.5 * Math.PI;
+		floorMesh9.position.x = 6;
+		floorMesh9.position.y = 0.01;
+		floorMesh9.position.z = 16;
+        floorMesh10.receiveShadow = true;
+        floorMesh10.rotation.x = -0.5 * Math.PI;
+		floorMesh10.position.x = 6;
+		floorMesh10.position.y = 0.01;
+		floorMesh10.position.z = 8;
+        floorMesh11.receiveShadow = true;
+        floorMesh11.rotation.x = -0.5 * Math.PI;
+		floorMesh11.position.x = 6;
+		floorMesh11.position.y = 0.01;
+		floorMesh11.position.z = 0;
+        floorMesh12.receiveShadow = true;
+        floorMesh12.rotation.x = -0.5 * Math.PI;
+		floorMesh12.position.x = 6;
+		floorMesh12.position.y = 0.01;
+		floorMesh12.position.z = -8;
+		
+        floorMesh13.receiveShadow = true;
+        floorMesh13.rotation.x = -0.5 * Math.PI;
+		floorMesh13.position.x = 2;
+		floorMesh13.position.y = 0.01;
+		floorMesh13.position.z = 12;
+        floorMesh14.receiveShadow = true;
+        floorMesh14.rotation.x = -0.5 * Math.PI;
+		floorMesh14.position.x = 2;
+		floorMesh14.position.y = 0.01;
+		floorMesh14.position.z = 4;
+        floorMesh15.receiveShadow = true;
+        floorMesh15.rotation.x = -0.5 * Math.PI;
+		floorMesh15.position.x = 2;
+		floorMesh15.position.y = 0.01;
+		floorMesh15.position.z = -4;
+        floorMesh16.receiveShadow = true;
+        floorMesh16.rotation.x = -0.5 * Math.PI;
+		floorMesh16.position.x = 2;
+		floorMesh16.position.y = 0.01;
+		floorMesh16.position.z = -12;
+		
+        floorMesh17.receiveShadow = true;
+        floorMesh17.rotation.x = -0.5 * Math.PI;
+		floorMesh17.position.x = -2;
+		floorMesh17.position.y = 0.01;
+		floorMesh17.position.z = 16;
+        floorMesh18.receiveShadow = true;
+        floorMesh18.rotation.x = -0.5 * Math.PI;
+		floorMesh18.position.x = -2;
+		floorMesh18.position.y = 0.01;
+		floorMesh18.position.z = 8;
+        floorMesh19.receiveShadow = true;
+        floorMesh19.rotation.x = -0.5 * Math.PI;
+		floorMesh19.position.x = -2;
+		floorMesh19.position.y = 0.01;
+		floorMesh19.position.z = 0;
+        floorMesh20.receiveShadow = true;
+        floorMesh20.rotation.x = -0.5 * Math.PI;
+		floorMesh20.position.x = -2;
+		floorMesh20.position.y = 0.01;
+		floorMesh20.position.z = -8;
+		
+        floorMesh21.receiveShadow = true;
+        floorMesh21.rotation.x = -0.5 * Math.PI;
+		floorMesh21.position.x = -6;
+		floorMesh21.position.y = 0.01;
+		floorMesh21.position.z = 12;
+        floorMesh22.receiveShadow = true;
+        floorMesh22.rotation.x = -0.5 * Math.PI;
+		floorMesh22.position.x = -6;
+		floorMesh22.position.y = 0.01;
+		floorMesh22.position.z = 4;
+        floorMesh23.receiveShadow = true;
+        floorMesh23.rotation.x = -0.5 * Math.PI;
+		floorMesh23.position.x = -6;
+		floorMesh23.position.y = 0.01;
+		floorMesh23.position.z = -4;
+        floorMesh24.receiveShadow = true;
+        floorMesh24.rotation.x = -0.5 * Math.PI;
+		floorMesh24.position.x = -6;
+		floorMesh24.position.y = 0.01;
+		floorMesh24.position.z = -12;
+		
+        floorMesh25.receiveShadow = true;
+        floorMesh25.rotation.x = -0.5 * Math.PI;
+		floorMesh25.position.x = -10;
+		floorMesh25.position.y = 0.01;
+		floorMesh25.position.z = 16;
+        floorMesh26.receiveShadow = true;
+        floorMesh26.rotation.x = -0.5 * Math.PI;
+		floorMesh26.position.x = -10;
+		floorMesh26.position.y = 0.01;
+		floorMesh26.position.z = 8;
+        floorMesh27.receiveShadow = true;
+        floorMesh27.rotation.x = -0.5 * Math.PI;
+		floorMesh27.position.x = -10;
+		floorMesh27.position.y = 0.01;
+		floorMesh27.position.z = 0;
+        floorMesh28.receiveShadow = true;
+        floorMesh28.rotation.x = -0.5 * Math.PI;
+		floorMesh28.position.x = -10;
+		floorMesh28.position.y = 0.01;
+		floorMesh28.position.z = -8;
+		
+        floorMesh29.receiveShadow = true;
+        floorMesh29.rotation.x = -0.5 * Math.PI;
+		floorMesh29.position.x = -14;
+		floorMesh29.position.y = 0.01;
+		floorMesh29.position.z = 12;
+        floorMesh30.receiveShadow = true;
+        floorMesh30.rotation.x = -0.5 * Math.PI;
+		floorMesh30.position.x = -14;
+		floorMesh30.position.y = 0.01;
+		floorMesh30.position.z = 4;
+        floorMesh31.receiveShadow = true;
+        floorMesh31.rotation.x = -0.5 * Math.PI;
+		floorMesh31.position.x = -14;
+		floorMesh31.position.y = 0.01;
+		floorMesh31.position.z = -4;
+        floorMesh32.receiveShadow = true;
+        floorMesh32.rotation.x = -0.5 * Math.PI;
+		floorMesh32.position.x = -14;
+		floorMesh32.position.y = 0.01;
+		floorMesh32.position.z = -12;
+		
+        scene.add(floorMesh);
+        scene.add(floorMesh1);
+        scene.add(floorMesh2);
+        scene.add(floorMesh3);
+        scene.add(floorMesh4);
+        scene.add(floorMesh5);
+        scene.add(floorMesh6);
+        scene.add(floorMesh7);
+        scene.add(floorMesh8);
+        scene.add(floorMesh9);
+        scene.add(floorMesh10);
+        scene.add(floorMesh11);
+        scene.add(floorMesh12);
+        scene.add(floorMesh13);
+        scene.add(floorMesh14);
+        scene.add(floorMesh15);
+        scene.add(floorMesh16);
+        scene.add(floorMesh17);
+        scene.add(floorMesh18);
+        scene.add(floorMesh19);
+        scene.add(floorMesh20);
+        scene.add(floorMesh21);
+        scene.add(floorMesh22);
+        scene.add(floorMesh23);
+        scene.add(floorMesh24);
+        scene.add(floorMesh25);
+        scene.add(floorMesh26);
+        scene.add(floorMesh27);
+        scene.add(floorMesh28);
+        scene.add(floorMesh29);
+        scene.add(floorMesh30);
+        scene.add(floorMesh31);
+        scene.add(floorMesh32);
+    }
+	});
+</script>
+<body>
+</body>
+</html>
