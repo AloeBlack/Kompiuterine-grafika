@@ -46,7 +46,7 @@
 	C3.position.y = 11.98;
 	C3.position.z = 0;
 	C3.lookAt(new THREE.Vector3(0, 8, 0));
-	C3.up.set(1,0,0);
+	//C3.up.set(1,0,0);
 	
 	var startdir = new THREE.Vector3();
 	startdir.subVectors(C2.position , new THREE.Vector3(2, 3, 4));
@@ -156,7 +156,7 @@
 			points.push(new THREE.Vector3(C2.position.x, C2.position.y, C2.position.z));
 
             var hullGeometry = new THREE.ConvexGeometry(points);
-			var wireMesh = new THREE.EdgesGeometry(hullGeometry);
+			var wireMesh = new THREE.Mesh(hullGeometry);
             scene.add(wireMesh);
         }
     
@@ -209,6 +209,8 @@
         camObject.lookAt(valdove1.position);
         step += 0.02;
         valdove1.position.x = 10 * Math.cos(step);
+		C3.position.z = 0.5 * Math.sin(step);
+		camObject.position.z = 0.5 * Math.sin(step);
 		if(valdove1.position.x > 0){
 			camObject.rotation.z += Math.PI;
 		}
